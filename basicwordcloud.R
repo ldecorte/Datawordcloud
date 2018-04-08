@@ -18,14 +18,18 @@ Rpdf <- readPDF(control = list(text = "-layout"))(elem = list(uri = file),
 Rpdf <- readLines(filetxt) # don't mind warning..
 
 Rpdf <- tolower(Rpdf)
-Rpdf <- removeWords(Rpdf, c("\\f", stopwords()))
-# Remove numbers
-Rpdf <- tm_map(Rpdf, removeNumbers)
-# specify your stopwords as a character vector
-#Rpdf <- tm_map(Rpdf, removeWords, c("word1", "word2")) 
-
+ 
 
 corpus <- Corpus(VectorSource(Rpdf))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- removeWords(corpus, c("\\f", stopwords()))
+# Remove numbers
+corpus <- tm_map(corpus, removeNumbers)
+# Remove english common stopwords
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
+# Remove your own stop word
+corpus <- tm_map(corpus, removeWords, c("word1", "word2"))
+#removepunctuation
 corpus <- tm_map(corpus, removePunctuation)
 tdm <- TermDocumentMatrix(corpus)
 
@@ -51,7 +55,13 @@ d <- cbind(freq = agg_freq[, 2], agg_word)
 d <- d[order(d$freq, decreasing = T), ]
 
 # print wordcloud:
-wordcloud(d$word, d$freq)
+wordcloud(  d$word, d$freq
+                    , scale=c(5,0.5)     # Set min and max scale
+                    , max.words=500      # Set top n words
+                    , random.order=FALSE # Words in decreasing freq
+                    , rot.per=0.35       # % of vertical words
+                    , use.r.layout=FALSE # Use C++ collision detection
+                    , colors=brewer.pal(8, "Dark2")) 
 
 write.csv(m, file="DocumentTermMatrix.csv") 
 write.csv(d, file="DocumentTermFreq.csv") 
